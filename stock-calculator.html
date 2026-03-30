@@ -363,12 +363,12 @@
         }
 
         .profit-positive {
-            color: #10b981;
+            color: #10b981 !important;
             font-weight: bold;
         }
 
         .profit-negative {
-            color: #ef4444;
+            color: #ef4444 !important;
             font-weight: bold;
         }
 
@@ -462,7 +462,6 @@
             }
         }
 
-        /* أنماط خاصة للطباعة */
         @media print {
             body {
                 background: white;
@@ -829,6 +828,7 @@
             
             const expenses = parseFloat(document.getElementById('expenses').value) || 0;
             const totalCost = totalValue + expenses;
+            const averagePrice = totalCost / totalQuantity;
             
             const totalRevenue = expectedSellPrice * totalQuantity;
             const netProfit = totalRevenue - totalCost;
@@ -841,13 +841,33 @@
             
             const netProfitElement = document.getElementById('netProfit');
             netProfitElement.innerHTML = `${netProfit.toFixed(2)} ${currentCurrency}`;
-            netProfitElement.className = netProfit >= 0 ? 'profit-positive' : 'profit-negative';
             
             const profitPercentageElement = document.getElementById('profitPercentage');
             profitPercentageElement.innerHTML = `${profitPercentage.toFixed(2)}%`;
-            profitPercentageElement.className = profitPercentage >= 0 ? 'profit-positive' : 'profit-negative';
             
-            document.getElementById('breakEven').innerHTML = `${breakEven.toFixed(2)} ${currentCurrency}`;
+            const breakEvenElement = document.getElementById('breakEven');
+            breakEvenElement.innerHTML = `${breakEven.toFixed(2)} ${currentCurrency}`;
+            
+            // تحديد اللون بناءً على مقارنة سعر البيع مع متوسط السعر
+            if (expectedSellPrice > averagePrice) {
+                // ربح - أخضر
+                netProfitElement.style.color = '#10b981';
+                profitPercentageElement.style.color = '#10b981';
+                netProfitElement.classList.add('profit-positive');
+                profitPercentageElement.classList.add('profit-positive');
+            } else if (expectedSellPrice < averagePrice) {
+                // خسارة - أحمر
+                netProfitElement.style.color = '#ef4444';
+                profitPercentageElement.style.color = '#ef4444';
+                netProfitElement.classList.add('profit-negative');
+                profitPercentageElement.classList.add('profit-negative');
+            } else {
+                // تعادل - برتقالي
+                netProfitElement.style.color = '#f59e0b';
+                profitPercentageElement.style.color = '#f59e0b';
+                netProfitElement.classList.remove('profit-positive', 'profit-negative');
+                profitPercentageElement.classList.remove('profit-positive', 'profit-negative');
+            }
         }
 
         function updateChart(totalValue, expenses) {
@@ -891,7 +911,6 @@
             });
         }
 
-        // دالة حفظ الصفحة كصورة PNG
         function exportAsImage() {
             const element = document.getElementById('page-container');
             showAlert('⏳ جاري تحضير الصورة...', 'info');
@@ -915,7 +934,6 @@
             });
         }
 
-        // دالة حفظ النتائج فقط كصورة
         function exportResultAsImage() {
             const resultElement = document.getElementById('result');
             if (!resultElement.classList.contains('show')) {
@@ -943,7 +961,6 @@
             });
         }
 
-        // دالة حفظ كملف PDF
         async function exportAsPDF() {
             const element = document.getElementById('page-container');
             showAlert('⏳ جاري تحضير ملف PDF...', 'info');
@@ -959,9 +976,8 @@
                 const imgData = canvas.toDataURL('image/png');
                 const { jsPDF } = window.jspdf;
                 
-                // حساب أبعاد الصفحة
-                const imgWidth = 210; // A4 width in mm
-                const pageHeight = 297; // A4 height in mm
+                const imgWidth = 210;
+                const pageHeight = 297;
                 const imgHeight = (canvas.height * imgWidth) / canvas.width;
                 
                 let pdf = new jsPDF('p', 'mm', 'a4');
@@ -995,7 +1011,6 @@
             }
         }
 
-        // دالة طباعة الصفحة
         function printPage() {
             window.print();
         }
