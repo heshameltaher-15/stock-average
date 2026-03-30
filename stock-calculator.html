@@ -282,6 +282,16 @@
             color: white;
         }
 
+        .btn-export {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .btn-export:hover {
+            background: #7c3aed;
+            transform: translateY(-2px);
+        }
+
         .result {
             background: #e8f5e9;
             border-radius: 15px;
@@ -393,12 +403,22 @@
             gap: 10px;
             margin-top: 15px;
             flex-wrap: wrap;
+            justify-content: center;
         }
 
         .btn-small {
             padding: 8px 15px;
             font-size: 12px;
             flex: 0 1 auto;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-small:hover {
+            transform: translateY(-1px);
         }
 
         .alert {
@@ -441,12 +461,38 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* أنماط خاصة للطباعة */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+            .theme-toggle, .controls, .export-buttons, .btn, .remove-stock, .add-stock-btn {
+                display: none !important;
+            }
+            .container {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+            }
+            .result {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            .stock-section {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-    <div class="container">
+    <div class="container" id="page-container">
         <div class="header">
             <button class="theme-toggle" onclick="toggleDarkMode()">🌙 الوضع المظلم</button>
             <h1>📈 حاسبة الأسهم المتقدمة</h1>
@@ -469,7 +515,7 @@
 
             <div id="stocks-container" class="stocks-container"></div>
 
-            <button class="btn btn-secondary" onclick="addStock()">➕ إضافة سهم جديد</button>
+            <button class="btn btn-secondary add-stock-btn" onclick="addStock()">➕ إضافة سهم جديد</button>
 
             <div class="expenses-section">
                 <div class="stock-title">💼 المصاريف والعمولات</div>
@@ -492,6 +538,12 @@
                 <button class="btn btn-warning" onclick="resetForm()">🔄 إعادة تعيين</button>
                 <button class="btn btn-secondary" onclick="saveToLocalStorage()">💾 حفظ البيانات</button>
                 <button class="btn btn-secondary" onclick="loadFromLocalStorage()">📂 استعادة البيانات</button>
+            </div>
+
+            <div class="controls">
+                <button class="btn btn-export" onclick="exportAsImage()">📸 حفظ كصورة PNG</button>
+                <button class="btn btn-export" onclick="exportAsPDF()">📄 حفظ كملف PDF</button>
+                <button class="btn btn-export" onclick="printPage()">🖨️ طباعة الصفحة</button>
             </div>
 
             <div id="result" class="result">
@@ -545,7 +597,7 @@
                 </div>
 
                 <div class="export-buttons">
-                    <button class="btn-small btn-primary" onclick="exportAsImage()">📸 تصدير كصورة</button>
+                    <button class="btn-small btn-primary" onclick="exportResultAsImage()">📸 تصدير النتائج كصورة</button>
                     <button class="btn-small btn-primary" onclick="copyResults()">📋 نسخ النتائج</button>
                 </div>
             </div>
@@ -589,7 +641,6 @@
             `;
             container.appendChild(stockDiv);
             
-            // إظهار زر الحذف لجميع الأسهم ما عدا الأول
             const removeBtn = stockDiv.querySelector('.remove-stock');
             if (index === 0 && removeBtn) {
                 removeBtn.style.display = 'none';
@@ -624,7 +675,6 @@
                 stockElement.remove();
                 stockCount--;
                 
-                // إعادة ترقيم الأسهم المتبقية
                 for (let i = index; i < stockCount; i++) {
                     const oldStock = document.getElementById(`stock-${i + 1}`);
                     if (oldStock) {
@@ -645,7 +695,6 @@
                     }
                 }
                 
-                // إخفاء زر الحذف للسهم الأول
                 const firstStock = document.getElementById(`stock-0`);
                 if (firstStock) {
                     const firstRemoveBtn = firstStock.querySelector('.remove-stock');
@@ -654,7 +703,6 @@
                 
                 showAlert('✅ تم حذف السهم بنجاح', 'success');
                 
-                // إعادة حساب النتائج إذا كانت ظاهرة
                 if (document.getElementById('result').classList.contains('show')) {
                     calculateAverage();
                 }
@@ -843,6 +891,115 @@
             });
         }
 
+        // دالة حفظ الصفحة كصورة PNG
+        function exportAsImage() {
+            const element = document.getElementById('page-container');
+            showAlert('⏳ جاري تحضير الصورة...', 'info');
+            
+            html2canvas(element, {
+                scale: 2,
+                backgroundColor: document.body.classList.contains('dark-mode') ? '#1e293b' : '#ffffff',
+                logging: false,
+                useCORS: true
+            }).then(canvas => {
+                const link = document.createElement('a');
+                const date = new Date();
+                const timestamp = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}_${date.getHours()}-${date.getMinutes()}`;
+                link.download = `stock-calculator-${timestamp}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+                showAlert('✅ تم حفظ الصفحة كصورة بنجاح!', 'success');
+            }).catch(error => {
+                console.error(error);
+                showAlert('❌ حدث خطأ أثناء حفظ الصورة', 'error');
+            });
+        }
+
+        // دالة حفظ النتائج فقط كصورة
+        function exportResultAsImage() {
+            const resultElement = document.getElementById('result');
+            if (!resultElement.classList.contains('show')) {
+                showAlert('⚠️ يرجى حساب النتائج أولاً', 'warning');
+                return;
+            }
+            
+            showAlert('⏳ جاري تحضير صورة النتائج...', 'info');
+            
+            html2canvas(resultElement, {
+                scale: 2,
+                backgroundColor: document.body.classList.contains('dark-mode') ? '#1e293b' : '#ffffff',
+                logging: false
+            }).then(canvas => {
+                const link = document.createElement('a');
+                const date = new Date();
+                const timestamp = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}_${date.getHours()}-${date.getMinutes()}`;
+                link.download = `stock-results-${timestamp}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+                showAlert('✅ تم حفظ النتائج كصورة بنجاح!', 'success');
+            }).catch(error => {
+                console.error(error);
+                showAlert('❌ حدث خطأ أثناء حفظ الصورة', 'error');
+            });
+        }
+
+        // دالة حفظ كملف PDF
+        async function exportAsPDF() {
+            const element = document.getElementById('page-container');
+            showAlert('⏳ جاري تحضير ملف PDF...', 'info');
+            
+            try {
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    backgroundColor: document.body.classList.contains('dark-mode') ? '#1e293b' : '#ffffff',
+                    logging: false,
+                    useCORS: true
+                });
+                
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                
+                // حساب أبعاد الصفحة
+                const imgWidth = 210; // A4 width in mm
+                const pageHeight = 297; // A4 height in mm
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                let pdf = new jsPDF('p', 'mm', 'a4');
+                let position = 0;
+                
+                if (imgHeight <= pageHeight) {
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                } else {
+                    let heightLeft = imgHeight;
+                    let page = 1;
+                    
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                    
+                    while (heightLeft > 0) {
+                        position = heightLeft - imgHeight;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                        page++;
+                    }
+                }
+                
+                const date = new Date();
+                const timestamp = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}_${date.getHours()}-${date.getMinutes()}`;
+                pdf.save(`stock-calculator-${timestamp}.pdf`);
+                showAlert('✅ تم حفظ الصفحة كملف PDF بنجاح!', 'success');
+            } catch (error) {
+                console.error(error);
+                showAlert('❌ حدث خطأ أثناء حفظ ملف PDF', 'error');
+            }
+        }
+
+        // دالة طباعة الصفحة
+        function printPage() {
+            window.print();
+        }
+
         function saveToLocalStorage() {
             const data = {};
             for (let i = 0; i < stockCount; i++) {
@@ -894,24 +1051,6 @@
             document.getElementById('result').classList.remove('show');
             document.getElementById('profitSection').style.display = 'none';
             showAlert('✅ تم إعادة تعيين جميع الحقول', 'success');
-        }
-
-        function exportAsImage() {
-            const resultElement = document.getElementById('result');
-            if (!resultElement) return;
-            
-            html2canvas(resultElement, {
-                scale: 2,
-                backgroundColor: '#ffffff'
-            }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'stock-analysis.png';
-                link.href = canvas.toDataURL();
-                link.click();
-                showAlert('✅ تم تصدير الصورة بنجاح!', 'success');
-            }).catch(() => {
-                showAlert('❌ حدث خطأ أثناء تصدير الصورة', 'error');
-            });
         }
 
         function copyResults() {
