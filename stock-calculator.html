@@ -164,7 +164,9 @@
             border-radius: 50%;
             cursor: pointer;
             font-size: 12px;
-            display: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .stock-section:first-child .remove-stock {
@@ -559,6 +561,7 @@
 
         function initializeStocks() {
             const container = document.getElementById('stocks-container');
+            if (!container) return;
             container.innerHTML = '';
             for (let i = 0; i < stockCount; i++) {
                 addStockElement(i);
@@ -567,11 +570,13 @@
 
         function addStockElement(index) {
             const container = document.getElementById('stocks-container');
+            if (!container) return;
+            
             const stockDiv = document.createElement('div');
             stockDiv.className = 'stock-section';
             stockDiv.id = `stock-${index}`;
             stockDiv.innerHTML = `
-                <button class="remove-stock" onclick="removeStock(${index})" ${index === 0 ? 'style="display:none"' : ''}>✖</button>
+                <button class="remove-stock" onclick="removeStock(${index})">✖</button>
                 <div class="stock-title">📊 السهم ${index + 1}</div>
                 <div class="input-group">
                     <label>💰 سعر السهم</label>
@@ -583,6 +588,12 @@
                 </div>
             `;
             container.appendChild(stockDiv);
+            
+            // إظهار زر الحذف لجميع الأسهم ما عدا الأول
+            const removeBtn = stockDiv.querySelector('.remove-stock');
+            if (index === 0 && removeBtn) {
+                removeBtn.style.display = 'none';
+            }
         }
 
         function clearWarning(index) {
@@ -599,24 +610,53 @@
         function addStock() {
             stockCount++;
             addStockElement(stockCount - 1);
+            showAlert('✅ تم إضافة سهم جديد بنجاح', 'success');
         }
 
         function removeStock(index) {
-            if (stockCount > 1) {
-                const stockElement = document.getElementById(`stock-${index}`);
+            if (stockCount <= 1) {
+                showAlert('⚠️ لا يمكن حذف السهم الأخير', 'warning');
+                return;
+            }
+            
+            const stockElement = document.getElementById(`stock-${index}`);
+            if (stockElement) {
                 stockElement.remove();
                 stockCount--;
-                for (let i = index + 1; i <= stockCount; i++) {
-                    const oldStock = document.getElementById(`stock-${i}`);
+                
+                // إعادة ترقيم الأسهم المتبقية
+                for (let i = index; i < stockCount; i++) {
+                    const oldStock = document.getElementById(`stock-${i + 1}`);
                     if (oldStock) {
-                        oldStock.id = `stock-${i - 1}`;
+                        oldStock.id = `stock-${i}`;
                         const title = oldStock.querySelector('.stock-title');
-                        title.innerHTML = `📊 السهم ${i}`;
-                        const priceInput = oldStock.querySelector(`#price${i}`);
-                        const quantityInput = oldStock.querySelector(`#quantity${i}`);
-                        if (priceInput) priceInput.id = `price${i - 1}`;
-                        if (quantityInput) quantityInput.id = `quantity${i - 1}`;
+                        if (title) title.innerHTML = `📊 السهم ${i + 1}`;
+                        
+                        const priceInput = oldStock.querySelector(`#price${i + 1}`);
+                        if (priceInput) priceInput.id = `price${i}`;
+                        
+                        const quantityInput = oldStock.querySelector(`#quantity${i + 1}`);
+                        if (quantityInput) quantityInput.id = `quantity${i}`;
+                        
+                        const removeBtn = oldStock.querySelector('.remove-stock');
+                        if (removeBtn) {
+                            removeBtn.setAttribute('onclick', `removeStock(${i})`);
+                        }
                     }
+                }
+                
+                // إخفاء زر الحذف للسهم الأول
+                const firstStock = document.getElementById(`stock-0`);
+                if (firstStock) {
+                    const firstRemoveBtn = firstStock.querySelector('.remove-stock');
+                    if (firstRemoveBtn) firstRemoveBtn.style.display = 'none';
+                }
+                
+                showAlert('✅ تم حذف السهم بنجاح', 'success');
+                
+                // إعادة حساب النتائج إذا كانت ظاهرة
+                if (document.getElementById('result').classList.contains('show')) {
+                    calculateAverage();
                 }
             }
         }
@@ -634,36 +674,38 @@
             const warnings = [];
             const validStocks = [];
 
-            // جمع بيانات الأسهم مع التحقق
             for (let i = 0; i < stockCount; i++) {
                 const priceInput = document.getElementById(`price${i}`);
                 const quantityInput = document.getElementById(`quantity${i}`);
-                const price = parseFloat(priceInput?.value);
-                const quantity = parseFloat(quantityInput?.value);
+                
+                if (!priceInput || !quantityInput) continue;
+                
+                const price = parseFloat(priceInput.value);
+                const quantity = parseFloat(quantityInput.value);
                 
                 const stockElement = document.getElementById(`stock-${i}`);
                 let hasWarning = false;
                 
-                // التحقق من القيم
-                if (priceInput?.value === '' || isNaN(price) || price <= 0) {
+                if (priceInput.value === '' || isNaN(price) || price <= 0) {
                     warnings.push(`⚠️ السهم ${i + 1}: سعر السهم غير صحيح (تم تجاهله)`);
                     hasWarning = true;
                 }
-                if (quantityInput?.value === '' || isNaN(quantity) || quantity <= 0) {
+                if (quantityInput.value === '' || isNaN(quantity) || quantity <= 0) {
                     warnings.push(`⚠️ السهم ${i + 1}: عدد الأسهم غير صحيح (تم تجاهله)`);
                     hasWarning = true;
                 }
                 
-                // إضافة التنبيه البصري للسهم
                 if (stockElement) {
                     if (hasWarning) {
                         stockElement.classList.add('warning');
-                        // إضافة رسالة تحذير داخل السهم
                         let warningMsg = stockElement.querySelector('.warning-message');
                         if (!warningMsg) {
                             warningMsg = document.createElement('div');
                             warningMsg.className = 'warning-message';
-                            stockElement.insertBefore(warningMsg, stockElement.querySelector('.input-group'));
+                            const firstInputGroup = stockElement.querySelector('.input-group');
+                            if (firstInputGroup) {
+                                stockElement.insertBefore(warningMsg, firstInputGroup);
+                            }
                         }
                         warningMsg.innerHTML = '⚠️ بيانات غير صحيحة - سيتم تجاهل هذا السهم';
                     } else {
@@ -675,7 +717,6 @@
                     }
                 }
                 
-                // إضافة القيم الصحيحة فقط
                 if (!isNaN(price) && !isNaN(quantity) && price > 0 && quantity > 0) {
                     totalValue += price * quantity;
                     totalQuantity += quantity;
@@ -685,27 +726,23 @@
 
             const expenses = parseFloat(document.getElementById('expenses').value) || 0;
             
-            // عرض التحذيرات
             if (warnings.length > 0) {
                 showAlert(warnings.join('<br>'), 'warning');
             }
             
-            // التحقق من وجود أسهم صالحة
             if (validStocks.length === 0) {
                 showAlert('❌ لا توجد بيانات صحيحة للحساب! يرجى إدخال سعر وعدد أسهم صحيحين.', 'error');
                 document.getElementById('result').classList.remove('show');
                 return;
             }
             
-            // عرض عدد الأسهم التي تم استخدامها
             if (validStocks.length < stockCount) {
-                showAlert(`✅ تم الحساب باستخدام ${validStocks.length} سهم فقط من أصل ${stockCount} (تم تجاهل الأسهم ذات البيانات غير الصحيحة)`, 'info');
+                showAlert(`✅ تم الحساب باستخدام ${validStocks.length} سهم فقط من أصل ${stockCount}`, 'info');
             }
 
             const totalCost = totalValue + expenses;
             const averagePrice = totalCost / totalQuantity;
 
-            // عرض النتائج
             document.getElementById('avgPrice').innerHTML = `${averagePrice.toFixed(2)} ${currentCurrency}`;
             document.getElementById('totalValue').innerHTML = `${totalValue.toFixed(2)} ${currentCurrency}`;
             document.getElementById('totalQuantity').innerHTML = totalQuantity.toFixed(2);
@@ -714,10 +751,7 @@
             
             document.getElementById('result').classList.add('show');
             
-            // تحديث الرسم البياني
             updateChart(totalValue, expenses);
-            
-            // حساب الربح
             calculateProfit();
             
             return { averagePrice, totalCost, totalQuantity };
@@ -747,7 +781,6 @@
             
             const expenses = parseFloat(document.getElementById('expenses').value) || 0;
             const totalCost = totalValue + expenses;
-            const averagePrice = totalCost / totalQuantity;
             
             const totalRevenue = expectedSellPrice * totalQuantity;
             const netProfit = totalRevenue - totalCost;
@@ -770,13 +803,16 @@
         }
 
         function updateChart(totalValue, expenses) {
-            const ctx = document.getElementById('distributionChart').getContext('2d');
+            const ctx = document.getElementById('distributionChart');
+            if (!ctx) return;
+            
+            const context = ctx.getContext('2d');
             
             if (chart) {
                 chart.destroy();
             }
             
-            chart = new Chart(ctx, {
+            chart = new Chart(context, {
                 type: 'pie',
                 data: {
                     labels: ['قيمة الأسهم', 'المصاريف'],
@@ -810,8 +846,10 @@
         function saveToLocalStorage() {
             const data = {};
             for (let i = 0; i < stockCount; i++) {
-                data[`price${i}`] = document.getElementById(`price${i}`)?.value || '';
-                data[`quantity${i}`] = document.getElementById(`quantity${i}`)?.value || '';
+                const priceInput = document.getElementById(`price${i}`);
+                const quantityInput = document.getElementById(`quantity${i}`);
+                data[`price${i}`] = priceInput?.value || '';
+                data[`quantity${i}`] = quantityInput?.value || '';
             }
             data.expenses = document.getElementById('expenses').value || '';
             data.currency = document.getElementById('currency').value;
@@ -860,6 +898,8 @@
 
         function exportAsImage() {
             const resultElement = document.getElementById('result');
+            if (!resultElement) return;
+            
             html2canvas(resultElement, {
                 scale: 2,
                 backgroundColor: '#ffffff'
@@ -875,10 +915,10 @@
         }
 
         function copyResults() {
-            const avgPrice = document.getElementById('avgPrice').innerText;
-            const totalValue = document.getElementById('totalValue').innerText;
-            const totalQuantity = document.getElementById('totalQuantity').innerText;
-            const totalCost = document.getElementById('totalCost').innerText;
+            const avgPrice = document.getElementById('avgPrice')?.innerText || '';
+            const totalValue = document.getElementById('totalValue')?.innerText || '';
+            const totalQuantity = document.getElementById('totalQuantity')?.innerText || '';
+            const totalCost = document.getElementById('totalCost')?.innerText || '';
             
             const text = `نتائج تحليل الأسهم:\nمتوسط سعر السهم: ${avgPrice}\nإجمالي قيمة الأسهم: ${totalValue}\nإجمالي عدد الأسهم: ${totalQuantity}\nالتكلفة الإجمالية: ${totalCost}`;
             
@@ -903,6 +943,8 @@
 
         function showAlert(message, type) {
             const alertDiv = document.getElementById('alert');
+            if (!alertDiv) return;
+            
             alertDiv.innerHTML = message;
             alertDiv.className = 'alert show';
             
@@ -930,7 +972,8 @@
         const savedDarkMode = localStorage.getItem('darkMode');
         if (savedDarkMode === 'enabled') {
             document.body.classList.add('dark-mode');
-            document.querySelector('.theme-toggle').innerHTML = '☀️ الوضع المضيء';
+            const themeBtn = document.querySelector('.theme-toggle');
+            if (themeBtn) themeBtn.innerHTML = '☀️ الوضع المضيء';
         }
 
         initializeStocks();
