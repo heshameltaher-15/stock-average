@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>حاسبة الأسهم المتقدمة | تعطيل وتفعيل الأسهم</title>
+    <title>حاسبة الأسهم المتقدمة | متوسط السعر والربح</title>
     <style>
         * {
             margin: 0;
@@ -32,11 +32,6 @@
             background: #334155;
         }
 
-        body.dark-mode .stock-section.disabled {
-            background: #1f2a3e;
-            opacity: 0.6;
-        }
-
         body.dark-mode .expenses-section {
             background: linear-gradient(135deg, #2d3a4e 0%, #1e2a3a 100%);
         }
@@ -50,7 +45,7 @@
             background: #1e293b;
         }
 
-        body.dark-mode input, body.dark-mode select {
+        body.dark-mode input {
             background: #334155;
             border-color: #4a5568;
             color: #e2e8f0;
@@ -130,7 +125,7 @@
 
         .stocks-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 20px;
             margin-bottom: 25px;
         }
@@ -140,19 +135,8 @@
             border-radius: 15px;
             padding: 20px;
             border-right: 4px solid #667eea;
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease;
             position: relative;
-        }
-
-        .stock-section.disabled {
-            opacity: 0.5;
-            background: #e9ecef;
-            border-right-color: #adb5bd;
-        }
-
-        body.dark-mode .stock-section.disabled {
-            background: #2d3748;
-            opacity: 0.6;
         }
 
         .stock-section.warning {
@@ -168,70 +152,33 @@
             transform: translateX(-5px);
         }
 
-        .stock-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
+        .remove-stock {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            display: none;
+        }
+
+        .stock-section:first-child .remove-stock {
+            display: none;
         }
 
         .stock-title {
             font-size: 18px;
             font-weight: bold;
             color: #667eea;
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
             gap: 10px;
-        }
-
-        .stock-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .toggle-stock {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 5px 12px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-
-        .toggle-stock.active {
-            background: #28a745;
-        }
-
-        .toggle-stock.disabled-btn {
-            background: #dc3545;
-        }
-
-        .toggle-stock:hover {
-            transform: scale(1.05);
-        }
-
-        .remove-stock {
-            background: #ef4444;
-            color: white;
-            border: none;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        .remove-stock:hover {
-            transform: scale(1.1);
-            background: #dc2626;
-        }
-
-        .stock-section:first-child .remove-stock {
-            display: none;
         }
 
         .input-group {
@@ -258,17 +205,6 @@
             font-size: 14px;
             transition: all 0.3s ease;
             font-family: inherit;
-        }
-
-        .stock-section.disabled input {
-            background: #e9ecef;
-            color: #6c757d;
-            cursor: not-allowed;
-        }
-
-        body.dark-mode .stock-section.disabled input {
-            background: #2d3748;
-            color: #9ca3af;
         }
 
         input:focus, select:focus {
@@ -332,6 +268,11 @@
         .btn-secondary:hover {
             background: #38a169;
             transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
         }
 
         .btn-warning {
@@ -434,15 +375,6 @@
             color: #fde68a;
         }
 
-        .info-badge {
-            background: #667eea;
-            color: white;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            margin-right: 10px;
-        }
-
         .chart-container {
             margin: 20px 0;
             text-align: center;
@@ -516,7 +448,7 @@
         <div class="header">
             <button class="theme-toggle" onclick="toggleDarkMode()">🌙 الوضع المظلم</button>
             <h1>📈 حاسبة الأسهم المتقدمة</h1>
-            <p>حساب متوسط السعر | إمكانية تعطيل وتفعيل الأسهم | تحليل الربحية</p>
+            <p>حساب متوسط السعر، تحليل الربحية، رسوم بيانية وتقارير شاملة</p>
         </div>
 
         <div class="content">
@@ -573,14 +505,6 @@
                         <span class="detail-value" id="totalQuantity">0.00</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-label">الأسهم النشطة:</span>
-                        <span class="detail-value" id="activeStocks">0</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">الأسهم المعطلة:</span>
-                        <span class="detail-value" id="disabledStocks">0</span>
-                    </div>
-                    <div class="detail-item">
                         <span class="detail-label">إجمالي المصاريف:</span>
                         <span class="detail-value" id="totalExpenses">0.00</span>
                     </div>
@@ -632,15 +556,11 @@
         let stockCount = 2;
         let chart = null;
         let currentCurrency = 'ريال';
-        let stockStatus = {}; // لتخزين حالة تعطيل الأسهم
 
         function initializeStocks() {
             const container = document.getElementById('stocks-container');
             container.innerHTML = '';
             for (let i = 0; i < stockCount; i++) {
-                if (stockStatus[i] === undefined) {
-                    stockStatus[i] = true; // true = مفعل, false = معطل
-                }
                 addStockElement(i);
             }
         }
@@ -648,83 +568,36 @@
         function addStockElement(index) {
             const container = document.getElementById('stocks-container');
             const stockDiv = document.createElement('div');
-            const isEnabled = stockStatus[index] !== false;
-            stockDiv.className = `stock-section ${!isEnabled ? 'disabled' : ''}`;
+            stockDiv.className = 'stock-section';
             stockDiv.id = `stock-${index}`;
             stockDiv.innerHTML = `
-                <div class="stock-header">
-                    <div class="stock-title">
-                        📊 السهم ${index + 1}
-                        ${!isEnabled ? '<span class="info-badge">⛔ معطل</span>' : ''}
-                    </div>
-                    <div class="stock-actions">
-                        <button class="toggle-stock ${isEnabled ? 'active' : 'disabled-btn'}" onclick="toggleStock(${index})">
-                            ${isEnabled ? '✅ مفعل' : '⛔ معطل'}
-                        </button>
-                        <button class="remove-stock" onclick="removeStock(${index})" ${index === 0 ? 'style="display:none"' : ''}>✖</button>
-                    </div>
-                </div>
+                <button class="remove-stock" onclick="removeStock(${index})" ${index === 0 ? 'style="display:none"' : ''}>✖</button>
+                <div class="stock-title">📊 السهم ${index + 1}</div>
                 <div class="input-group">
                     <label>💰 سعر السهم</label>
-                    <input type="number" id="price${index}" placeholder="أدخل سعر السهم" step="any" ${!isEnabled ? 'disabled' : ''}>
+                    <input type="number" id="price${index}" placeholder="أدخل سعر السهم" step="any" oninput="clearWarning(${index})">
                 </div>
                 <div class="input-group">
                     <label>📊 عدد الأسهم</label>
-                    <input type="number" id="quantity${index}" placeholder="أدخل عدد الأسهم" step="any" ${!isEnabled ? 'disabled' : ''}>
+                    <input type="number" id="quantity${index}" placeholder="أدخل عدد الأسهم" step="any" oninput="clearWarning(${index})">
                 </div>
             `;
             container.appendChild(stockDiv);
         }
 
-        function toggleStock(index) {
-            stockStatus[index] = !stockStatus[index];
-            refreshStockDisplay(index);
-            showAlert(
-                stockStatus[index] ? 
-                `✅ تم تفعيل السهم ${index + 1}` : 
-                `⛔ تم تعطيل السهم ${index + 1} (لن يتم حسابه)`,
-                'info'
-            );
-            if (document.getElementById('result').classList.contains('show')) {
-                calculateAverage();
-            }
-        }
-
-        function refreshStockDisplay(index) {
+        function clearWarning(index) {
             const stockElement = document.getElementById(`stock-${index}`);
-            const isEnabled = stockStatus[index];
-            
             if (stockElement) {
-                if (isEnabled) {
-                    stockElement.classList.remove('disabled');
-                } else {
-                    stockElement.classList.add('disabled');
+                stockElement.classList.remove('warning');
+                const existingWarning = stockElement.querySelector('.warning-message');
+                if (existingWarning) {
+                    existingWarning.remove();
                 }
-                
-                const titleDiv = stockElement.querySelector('.stock-title');
-                const badge = titleDiv.querySelector('.info-badge');
-                if (!isEnabled && !badge) {
-                    titleDiv.innerHTML += '<span class="info-badge">⛔ معطل</span>';
-                } else if (isEnabled && badge) {
-                    badge.remove();
-                }
-                
-                const toggleBtn = stockElement.querySelector('.toggle-stock');
-                if (toggleBtn) {
-                    toggleBtn.className = `toggle-stock ${isEnabled ? 'active' : 'disabled-btn'}`;
-                    toggleBtn.innerHTML = isEnabled ? '✅ مفعل' : '⛔ معطل';
-                }
-                
-                const priceInput = document.getElementById(`price${index}`);
-                const quantityInput = document.getElementById(`quantity${index}`);
-                if (priceInput) priceInput.disabled = !isEnabled;
-                if (quantityInput) quantityInput.disabled = !isEnabled;
             }
         }
 
         function addStock() {
             stockCount++;
-            stockStatus[stockCount - 1] = true;
             addStockElement(stockCount - 1);
         }
 
@@ -732,25 +605,18 @@
             if (stockCount > 1) {
                 const stockElement = document.getElementById(`stock-${index}`);
                 stockElement.remove();
-                delete stockStatus[index];
                 stockCount--;
-                // إعادة ترقيم الأسهم المتبقية
-                const newStatus = {};
-                for (let i = 0; i < stockCount; i++) {
-                    const oldIndex = i >= index ? i + 1 : i;
-                    newStatus[i] = stockStatus[oldIndex] !== false;
-                }
-                stockStatus = newStatus;
-                
-                // إعادة بناء الأسهم
-                initializeStocks();
-                
-                // استعادة القيم المحفوظة
-                for (let i = 0; i < stockCount; i++) {
-                    const oldPrice = localStorage.getItem(`temp_price_${i >= index ? i + 1 : i}`);
-                    const oldQuantity = localStorage.getItem(`temp_quantity_${i >= index ? i + 1 : i}`);
-                    if (oldPrice) document.getElementById(`price${i}`).value = oldPrice;
-                    if (oldQuantity) document.getElementById(`quantity${i}`).value = oldQuantity;
+                for (let i = index + 1; i <= stockCount; i++) {
+                    const oldStock = document.getElementById(`stock-${i}`);
+                    if (oldStock) {
+                        oldStock.id = `stock-${i - 1}`;
+                        const title = oldStock.querySelector('.stock-title');
+                        title.innerHTML = `📊 السهم ${i}`;
+                        const priceInput = oldStock.querySelector(`#price${i}`);
+                        const quantityInput = oldStock.querySelector(`#quantity${i}`);
+                        if (priceInput) priceInput.id = `price${i - 1}`;
+                        if (quantityInput) quantityInput.id = `quantity${i - 1}`;
+                    }
                 }
             }
         }
@@ -765,47 +631,58 @@
         function calculateAverage() {
             let totalValue = 0;
             let totalQuantity = 0;
-            let activeCount = 0;
-            let disabledCount = 0;
             const warnings = [];
-            
-            // حفظ القيم مؤقتاً
+            const validStocks = [];
+
+            // جمع بيانات الأسهم مع التحقق
             for (let i = 0; i < stockCount; i++) {
-                const price = document.getElementById(`price${i}`)?.value;
-                const quantity = document.getElementById(`quantity${i}`)?.value;
-                localStorage.setItem(`temp_price_${i}`, price || '');
-                localStorage.setItem(`temp_quantity_${i}`, quantity || '');
-            }
-            
-            for (let i = 0; i < stockCount; i++) {
-                const isEnabled = stockStatus[i] !== false;
+                const priceInput = document.getElementById(`price${i}`);
+                const quantityInput = document.getElementById(`quantity${i}`);
+                const price = parseFloat(priceInput?.value);
+                const quantity = parseFloat(quantityInput?.value);
                 
-                if (!isEnabled) {
-                    disabledCount++;
-                    continue;
-                }
-                
-                activeCount++;
-                const price = parseFloat(document.getElementById(`price${i}`)?.value);
-                const quantity = parseFloat(document.getElementById(`quantity${i}`)?.value);
                 const stockElement = document.getElementById(`stock-${i}`);
+                let hasWarning = false;
                 
-                if (isNaN(price) || price <= 0) {
+                // التحقق من القيم
+                if (priceInput?.value === '' || isNaN(price) || price <= 0) {
                     warnings.push(`⚠️ السهم ${i + 1}: سعر السهم غير صحيح (تم تجاهله)`);
-                    if (stockElement) stockElement.classList.add('warning');
-                    continue;
+                    hasWarning = true;
                 }
-                if (isNaN(quantity) || quantity <= 0) {
+                if (quantityInput?.value === '' || isNaN(quantity) || quantity <= 0) {
                     warnings.push(`⚠️ السهم ${i + 1}: عدد الأسهم غير صحيح (تم تجاهله)`);
-                    if (stockElement) stockElement.classList.add('warning');
-                    continue;
+                    hasWarning = true;
                 }
                 
-                if (stockElement) stockElement.classList.remove('warning');
-                totalValue += price * quantity;
-                totalQuantity += quantity;
+                // إضافة التنبيه البصري للسهم
+                if (stockElement) {
+                    if (hasWarning) {
+                        stockElement.classList.add('warning');
+                        // إضافة رسالة تحذير داخل السهم
+                        let warningMsg = stockElement.querySelector('.warning-message');
+                        if (!warningMsg) {
+                            warningMsg = document.createElement('div');
+                            warningMsg.className = 'warning-message';
+                            stockElement.insertBefore(warningMsg, stockElement.querySelector('.input-group'));
+                        }
+                        warningMsg.innerHTML = '⚠️ بيانات غير صحيحة - سيتم تجاهل هذا السهم';
+                    } else {
+                        stockElement.classList.remove('warning');
+                        const existingWarning = stockElement.querySelector('.warning-message');
+                        if (existingWarning) {
+                            existingWarning.remove();
+                        }
+                    }
+                }
+                
+                // إضافة القيم الصحيحة فقط
+                if (!isNaN(price) && !isNaN(quantity) && price > 0 && quantity > 0) {
+                    totalValue += price * quantity;
+                    totalQuantity += quantity;
+                    validStocks.push(i + 1);
+                }
             }
-            
+
             const expenses = parseFloat(document.getElementById('expenses').value) || 0;
             
             // عرض التحذيرات
@@ -813,30 +690,37 @@
                 showAlert(warnings.join('<br>'), 'warning');
             }
             
-            if (activeCount === 0 || totalQuantity === 0) {
-                showAlert('❌ لا توجد أسهم نشطة أو بيانات صحيحة للحساب!', 'error');
+            // التحقق من وجود أسهم صالحة
+            if (validStocks.length === 0) {
+                showAlert('❌ لا توجد بيانات صحيحة للحساب! يرجى إدخال سعر وعدد أسهم صحيحين.', 'error');
                 document.getElementById('result').classList.remove('show');
                 return;
             }
             
-            if (disabledCount > 0) {
-                showAlert(`ℹ️ تم حساب المتوسط باستخدام ${activeCount} سهم نشط (تم تعطيل ${disabledCount} سهم)`, 'info');
+            // عرض عدد الأسهم التي تم استخدامها
+            if (validStocks.length < stockCount) {
+                showAlert(`✅ تم الحساب باستخدام ${validStocks.length} سهم فقط من أصل ${stockCount} (تم تجاهل الأسهم ذات البيانات غير الصحيحة)`, 'info');
             }
-            
+
             const totalCost = totalValue + expenses;
             const averagePrice = totalCost / totalQuantity;
-            
+
+            // عرض النتائج
             document.getElementById('avgPrice').innerHTML = `${averagePrice.toFixed(2)} ${currentCurrency}`;
             document.getElementById('totalValue').innerHTML = `${totalValue.toFixed(2)} ${currentCurrency}`;
             document.getElementById('totalQuantity').innerHTML = totalQuantity.toFixed(2);
-            document.getElementById('activeStocks').innerHTML = activeCount;
-            document.getElementById('disabledStocks').innerHTML = disabledCount;
             document.getElementById('totalExpenses').innerHTML = `${expenses.toFixed(2)} ${currentCurrency}`;
             document.getElementById('totalCost').innerHTML = `${totalCost.toFixed(2)} ${currentCurrency}`;
             
             document.getElementById('result').classList.add('show');
+            
+            // تحديث الرسم البياني
             updateChart(totalValue, expenses);
+            
+            // حساب الربح
             calculateProfit();
+            
+            return { averagePrice, totalCost, totalQuantity };
         }
 
         function calculateProfit() {
@@ -851,9 +735,6 @@
             let totalQuantity = 0;
             
             for (let i = 0; i < stockCount; i++) {
-                const isEnabled = stockStatus[i] !== false;
-                if (!isEnabled) continue;
-                
                 const price = parseFloat(document.getElementById(`price${i}`)?.value);
                 const quantity = parseFloat(document.getElementById(`quantity${i}`)?.value);
                 if (!isNaN(price) && !isNaN(quantity) && price > 0 && quantity > 0) {
@@ -866,6 +747,7 @@
             
             const expenses = parseFloat(document.getElementById('expenses').value) || 0;
             const totalCost = totalValue + expenses;
+            const averagePrice = totalCost / totalQuantity;
             
             const totalRevenue = expectedSellPrice * totalQuantity;
             const netProfit = totalRevenue - totalCost;
@@ -890,12 +772,14 @@
         function updateChart(totalValue, expenses) {
             const ctx = document.getElementById('distributionChart').getContext('2d');
             
-            if (chart) chart.destroy();
+            if (chart) {
+                chart.destroy();
+            }
             
             chart = new Chart(ctx, {
                 type: 'pie',
                 data: {
-                    labels: ['قيمة الأسهم النشطة', 'المصاريف'],
+                    labels: ['قيمة الأسهم', 'المصاريف'],
                     datasets: [{
                         data: [totalValue, expenses],
                         backgroundColor: ['#667eea', '#ed8936'],
@@ -907,21 +791,31 @@
                     responsive: true,
                     maintainAspectRatio: true,
                     plugins: {
-                        legend: { position: 'bottom', labels: { font: { size: 12 } } },
-                        title: { display: true, text: 'توزيع التكاليف', font: { size: 14, weight: 'bold' } }
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { size: 12 }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'توزيع التكاليف',
+                            font: { size: 14, weight: 'bold' }
+                        }
                     }
                 }
             });
         }
 
         function saveToLocalStorage() {
-            const data = { stockStatus: stockStatus, stockCount: stockCount };
+            const data = {};
             for (let i = 0; i < stockCount; i++) {
                 data[`price${i}`] = document.getElementById(`price${i}`)?.value || '';
                 data[`quantity${i}`] = document.getElementById(`quantity${i}`)?.value || '';
             }
             data.expenses = document.getElementById('expenses').value || '';
             data.currency = document.getElementById('currency').value;
+            data.stockCount = stockCount;
             
             localStorage.setItem('stockData', JSON.stringify(data));
             showAlert('✅ تم حفظ البيانات بنجاح!', 'success');
@@ -932,7 +826,6 @@
             if (savedData) {
                 const data = JSON.parse(savedData);
                 stockCount = data.stockCount || 2;
-                stockStatus = data.stockStatus || {};
                 initializeStocks();
                 
                 for (let i = 0; i < stockCount; i++) {
@@ -940,7 +833,6 @@
                     const quantityInput = document.getElementById(`quantity${i}`);
                     if (priceInput) priceInput.value = data[`price${i}`] || '';
                     if (quantityInput) quantityInput.value = data[`quantity${i}`] || '';
-                    refreshStockDisplay(i);
                 }
                 document.getElementById('expenses').value = data.expenses || '';
                 document.getElementById('currency').value = data.currency || 'ريال';
@@ -957,19 +849,21 @@
                 const quantityInput = document.getElementById(`quantity${i}`);
                 if (priceInput) priceInput.value = '';
                 if (quantityInput) quantityInput.value = '';
-                stockStatus[i] = true;
-                refreshStockDisplay(i);
+                clearWarning(i);
             }
             document.getElementById('expenses').value = '';
             document.getElementById('expectedSellPrice').value = '';
             document.getElementById('result').classList.remove('show');
             document.getElementById('profitSection').style.display = 'none';
-            showAlert('✅ تم إعادة تعيين جميع الحقول وتفعيل جميع الأسهم', 'success');
+            showAlert('✅ تم إعادة تعيين جميع الحقول', 'success');
         }
 
         function exportAsImage() {
             const resultElement = document.getElementById('result');
-            html2canvas(resultElement, { scale: 2 }).then(canvas => {
+            html2canvas(resultElement, {
+                scale: 2,
+                backgroundColor: '#ffffff'
+            }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = 'stock-analysis.png';
                 link.href = canvas.toDataURL();
@@ -984,11 +878,62 @@
             const avgPrice = document.getElementById('avgPrice').innerText;
             const totalValue = document.getElementById('totalValue').innerText;
             const totalQuantity = document.getElementById('totalQuantity').innerText;
-            const activeStocks = document.getElementById('activeStocks').innerText;
-            const disabledStocks = document.getElementById('disabledStocks').innerText;
+            const totalCost = document.getElementById('totalCost').innerText;
             
-            const text = `نتائج تحليل الأسهم:\nمتوسط سعر السهم: ${avgPrice}\nإجمالي قيمة الأسهم: ${totalValue}\nإجمالي عدد الأسهم: ${totalQuantity}\nالأسهم النشطة: ${activeStocks}\nالأسهم المعطلة: ${disabledStocks}`;
+            const text = `نتائج تحليل الأسهم:\nمتوسط سعر السهم: ${avgPrice}\nإجمالي قيمة الأسهم: ${totalValue}\nإجمالي عدد الأسهم: ${totalQuantity}\nالتكلفة الإجمالية: ${totalCost}`;
             
             navigator.clipboard.writeText(text).then(() => {
                 showAlert('✅ تم نسخ النتائج إلى الحافظة!', 'success');
             }).catch(() => {
+                showAlert('❌ حدث خطأ أثناء النسخ', 'error');
+            });
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const button = document.querySelector('.theme-toggle');
+            if (document.body.classList.contains('dark-mode')) {
+                button.innerHTML = '☀️ الوضع المضيء';
+                localStorage.setItem('darkMode', 'enabled');
+            } else {
+                button.innerHTML = '🌙 الوضع المظلم';
+                localStorage.setItem('darkMode', 'disabled');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alert');
+            alertDiv.innerHTML = message;
+            alertDiv.className = 'alert show';
+            
+            if (type === 'success') {
+                alertDiv.classList.add('success');
+            } else if (type === 'error') {
+                alertDiv.style.background = '#f8d7da';
+                alertDiv.style.color = '#721c24';
+                alertDiv.style.borderRightColor = '#dc3545';
+            } else if (type === 'warning') {
+                alertDiv.style.background = '#fff3cd';
+                alertDiv.style.color = '#856404';
+                alertDiv.style.borderRightColor = '#ffc107';
+            } else {
+                alertDiv.style.background = '#cfe2ff';
+                alertDiv.style.color = '#084298';
+                alertDiv.style.borderRightColor = '#0d6efd';
+            }
+            
+            setTimeout(() => {
+                alertDiv.classList.remove('show');
+            }, 4000);
+        }
+
+        const savedDarkMode = localStorage.getItem('darkMode');
+        if (savedDarkMode === 'enabled') {
+            document.body.classList.add('dark-mode');
+            document.querySelector('.theme-toggle').innerHTML = '☀️ الوضع المضيء';
+        }
+
+        initializeStocks();
+    </script>
+</body>
+</html>
