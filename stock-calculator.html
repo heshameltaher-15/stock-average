@@ -1,0 +1,478 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة متوسط سعر السهم</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .stock-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-right: 4px solid #667eea;
+            transition: transform 0.3s ease;
+        }
+
+        .stock-section:hover {
+            transform: translateX(-5px);
+        }
+
+        .stock-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stock-title::before {
+            content: "📊";
+            font-size: 24px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .expenses-section {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 20px;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .calculate-btn:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            background: #e8f5e9;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            border: 2px solid #4caf50;
+            display: none;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2e7d32;
+            margin-bottom: 15px;
+        }
+
+        .result-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #1b5e20;
+            margin: 15px 0;
+        }
+
+        .result-details {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: right;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        .detail-value {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 12px;
+            border-radius: 10px;
+            margin-top: 15px;
+            text-align: center;
+            display: none;
+            border-right: 4px solid #c62828;
+        }
+
+        .error.show {
+            display: block;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 12px;
+            background: #f5f5f5;
+            color: #666;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .reset-btn:hover {
+            background: #e0e0e0;
+        }
+
+        @media (max-width: 600px) {
+            .content {
+                padding: 20px;
+            }
+            
+            .result-value {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📈 حاسبة متوسط سعر السهم</h1>
+            <p>احسب متوسط سعر السهم بدقة مع مراعاة مصاريف البيع والشراء</p>
+        </div>
+
+        <div class="content">
+            <!-- السهم الأول -->
+            <div class="stock-section">
+                <div class="stock-title">السهم الأول</div>
+                <div class="input-group">
+                    <label>💰 سعر السهم (ريال / دولار)</label>
+                    <input type="number" id="price1" placeholder="أدخل سعر السهم الأول" step="any">
+                </div>
+                <div class="input-group">
+                    <label>📊 عدد الأسهم</label>
+                    <input type="number" id="quantity1" placeholder="أدخل عدد الأسهم الأولى" step="any">
+                </div>
+            </div>
+
+            <!-- السهم الثاني -->
+            <div class="stock-section">
+                <div class="stock-title">السهم الثاني</div>
+                <div class="input-group">
+                    <label>💰 سعر السهم (ريال / دولار)</label>
+                    <input type="number" id="price2" placeholder="أدخل سعر السهم الثاني" step="any">
+                </div>
+                <div class="input-group">
+                    <label>📊 عدد الأسهم</label>
+                    <input type="number" id="quantity2" placeholder="أدخل عدد الأسهم الثانية" step="any">
+                </div>
+            </div>
+
+            <!-- مصاريف البيع والشراء -->
+            <div class="expenses-section">
+                <div class="stock-title" style="color: #764ba2;">💼 المصاريف</div>
+                <div class="input-group">
+                    <label>💵 إجمالي مصاريف البيع والشراء</label>
+                    <input type="number" id="expenses" placeholder="أدخل إجمالي المصاريف" step="any">
+                </div>
+            </div>
+
+            <!-- أزرار التحكم -->
+            <button class="calculate-btn" onclick="calculateAverage()">📊 حساب متوسط السعر</button>
+            <button class="reset-btn" onclick="resetForm()">🔄 إعادة تعيين</button>
+
+            <!-- عرض النتائج -->
+            <div id="result" class="result">
+                <div class="result-title">✨ متوسط سعر السهم بعد المصاريف ✨</div>
+                <div class="result-value" id="avgPrice">0.00</div>
+                <div class="result-details">
+                    <div class="detail-item">
+                        <span class="detail-label">إجمالي قيمة الأسهم:</span>
+                        <span class="detail-value" id="totalValue">0.00</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">إجمالي عدد الأسهم:</span>
+                        <span class="detail-value" id="totalQuantity">0.00</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">إجمالي المصاريف:</span>
+                        <span class="detail-value" id="totalExpenses">0.00</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">التكلفة الإجمالية (مع المصاريف):</span>
+                        <span class="detail-value" id="totalCost">0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="error" class="error"></div>
+        </div>
+    </div>
+
+    <script>
+        function calculateAverage() {
+            // الحصول على القيم من المدخلات
+            const price1 = parseFloat(document.getElementById('price1').value);
+            const quantity1 = parseFloat(document.getElementById('quantity1').value);
+            const price2 = parseFloat(document.getElementById('price2').value);
+            const quantity2 = parseFloat(document.getElementById('quantity2').value);
+            const expenses = parseFloat(document.getElementById('expenses').value);
+
+            // إخفاء النتائج السابقة
+            const resultDiv = document.getElementById('result');
+            const errorDiv = document.getElementById('error');
+            resultDiv.classList.remove('show');
+            errorDiv.classList.remove('show');
+            errorDiv.innerHTML = '';
+
+            // التحقق من صحة المدخلات
+            const errors = [];
+            
+            if (isNaN(price1) || price1 <= 0) {
+                errors.push('❌ سعر السهم الأول يجب أن يكون رقم موجب');
+            }
+            if (isNaN(quantity1) || quantity1 <= 0) {
+                errors.push('❌ عدد أسهم السهم الأول يجب أن يكون رقم موجب');
+            }
+            if (isNaN(price2) || price2 <= 0) {
+                errors.push('❌ سعر السهم الثاني يجب أن يكون رقم موجب');
+            }
+            if (isNaN(quantity2) || quantity2 <= 0) {
+                errors.push('❌ عدد أسهم السهم الثاني يجب أن يكون رقم موجب');
+            }
+            if (isNaN(expenses) || expenses < 0) {
+                errors.push('❌ المصاريف يجب أن تكون رقم (يمكن أن تكون صفر أو موجب)');
+            }
+
+            // عرض الأخطاء إذا وجدت
+            if (errors.length > 0) {
+                errorDiv.innerHTML = errors.join('<br>');
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            // حساب إجمالي قيمة الأسهم
+            const totalValue1 = price1 * quantity1;
+            const totalValue2 = price2 * quantity2;
+            const totalValue = totalValue1 + totalValue2;
+            
+            // حساب إجمالي عدد الأسهم
+            const totalQuantity = quantity1 + quantity2;
+            
+            // حساب التكلفة الإجمالية مع إضافة المصاريف
+            const totalCost = totalValue + expenses;
+            
+            // حساب متوسط سعر السهم
+            const averagePrice = totalCost / totalQuantity;
+
+            // عرض النتائج مع تنسيق الأرقام
+            document.getElementById('avgPrice').innerHTML = averagePrice.toFixed(2) + ' <span style="font-size: 16px;">(عملة)</span>';
+            document.getElementById('totalValue').innerHTML = totalValue.toFixed(2) + ' <span style="font-size: 12px;">عملة</span>';
+            document.getElementById('totalQuantity').innerHTML = totalQuantity.toFixed(2);
+            document.getElementById('totalExpenses').innerHTML = expenses.toFixed(2) + ' <span style="font-size: 12px;">عملة</span>';
+            document.getElementById('totalCost').innerHTML = totalCost.toFixed(2) + ' <span style="font-size: 12px;">عملة</span>';
+            
+            // عرض قسم النتائج مع تأثير حركي
+            resultDiv.classList.add('show');
+            
+            // تمرير سلس للنتائج
+            resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function resetForm() {
+            // إعادة تعيين جميع الحقول
+            document.getElementById('price1').value = '';
+            document.getElementById('quantity1').value = '';
+            document.getElementById('price2').value = '';
+            document.getElementById('quantity2').value = '';
+            document.getElementById('expenses').value = '';
+            
+            // إخفاء النتائج والأخطاء
+            const resultDiv = document.getElementById('result');
+            const errorDiv = document.getElementById('error');
+            resultDiv.classList.remove('show');
+            errorDiv.classList.remove('show');
+            errorDiv.innerHTML = '';
+            
+            // إزالة التمرير
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // إضافة خاصية الضغط على Enter لحساب المتوسط
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    calculateAverage();
+                }
+            });
+        });
+
+        // إضافة تحقق فوري للمدخلات (اختياري)
+        function validateInput(input) {
+            if (input.value < 0) {
+                input.value = 0;
+            }
+        }
+
+        // تطبيق التحقق على جميع حقول الأرقام
+        const numberInputs = document.querySelectorAll('input[type="number"]');
+        numberInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                if (this.value < 0) {
+                    this.value = 0;
+                }
+            });
+        });
+
+        // عرض معلومات إرشادية عند تحميل الصفحة
+        window.addEventListener('load', function() {
+            console.log('تم تحميل حاسبة متوسط سعر السهم بنجاح');
+            
+            // إضافة مثال توضيحي (اختياري)
+            const placeholderExample = `
+                مثال: 
+                السهم الأول: 100 ريال × 10 أسهم
+                السهم الثاني: 150 ريال × 20 سهم
+                المصاريف: 50 ريال
+                المتوسط = (1000 + 3000 + 50) ÷ 30 = 135 ريال
+            `;
+            
+            // يمكن إضافة مثال توضيحي كتلميح
+            const expensesInput = document.getElementById('expenses');
+            expensesInput.placeholder = 'مثال: 50 (إجمالي مصاريف البيع والشراء)';
+        });
+    </script>
+</body>
+</html>
