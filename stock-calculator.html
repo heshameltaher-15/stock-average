@@ -475,6 +475,7 @@
                 box-shadow: none;
                 margin: 0;
                 padding: 0;
+                max-width: 100%;
             }
             .result {
                 break-inside: avoid;
@@ -540,8 +541,8 @@
             </div>
 
             <div class="controls">
-                <button class="btn btn-export" onclick="exportAsImage()">📸 حفظ كصورة PNG</button>
-                <button class="btn btn-export" onclick="exportAsPDF()">📄 حفظ كملف PDF</button>
+                <button class="btn btn-export" onclick="exportAsHighQualityImage()">📸 حفظ كصورة (جودة عالية)</button>
+                <button class="btn btn-export" onclick="exportAsHighQualityPDF()">📄 حفظ كملف PDF (جودة عالية)</button>
                 <button class="btn btn-export" onclick="printPage()">🖨️ طباعة الصفحة</button>
             </div>
 
@@ -592,7 +593,7 @@
                 </div>
 
                 <div class="chart-container">
-                    <canvas id="distributionChart" width="400" height="200"></canvas>
+                    <canvas id="distributionChart" width="500" height="300"></canvas>
                 </div>
 
                 <div class="export-buttons">
@@ -798,6 +799,7 @@
             
             document.getElementById('result').classList.add('show');
             
+            // تحديث الرسم البياني بحجم أكبر للجودة العالية
             updateChart(totalValue, expenses);
             calculateProfit();
             
@@ -848,21 +850,17 @@
             const breakEvenElement = document.getElementById('breakEven');
             breakEvenElement.innerHTML = `${breakEven.toFixed(2)} ${currentCurrency}`;
             
-            // تحديد اللون بناءً على مقارنة سعر البيع مع متوسط السعر
             if (expectedSellPrice > averagePrice) {
-                // ربح - أخضر
                 netProfitElement.style.color = '#10b981';
                 profitPercentageElement.style.color = '#10b981';
                 netProfitElement.classList.add('profit-positive');
                 profitPercentageElement.classList.add('profit-positive');
             } else if (expectedSellPrice < averagePrice) {
-                // خسارة - أحمر
                 netProfitElement.style.color = '#ef4444';
                 profitPercentageElement.style.color = '#ef4444';
                 netProfitElement.classList.add('profit-negative');
                 profitPercentageElement.classList.add('profit-negative');
             } else {
-                // تعادل - برتقالي
                 netProfitElement.style.color = '#f59e0b';
                 profitPercentageElement.style.color = '#f59e0b';
                 netProfitElement.classList.remove('profit-positive', 'profit-negative');
@@ -888,7 +886,7 @@
                         data: [totalValue, expenses],
                         backgroundColor: ['#667eea', '#ed8936'],
                         borderColor: ['#5a67d8', '#dd6b20'],
-                        borderWidth: 1
+                        borderWidth: 2
                     }]
                 },
                 options: {
@@ -898,40 +896,119 @@
                         legend: {
                             position: 'bottom',
                             labels: {
-                                font: { size: 12 }
+                                font: { size: 14, weight: 'bold' }
                             }
                         },
                         title: {
                             display: true,
                             text: 'توزيع التكاليف',
-                            font: { size: 14, weight: 'bold' }
+                            font: { size: 16, weight: 'bold' }
                         }
                     }
                 }
             });
         }
 
-        function exportAsImage() {
+        // دالة محسنة لحفظ الصورة بجودة عالية
+        async function exportAsHighQualityImage() {
             const element = document.getElementById('page-container');
-            showAlert('⏳ جاري تحضير الصورة...', 'info');
+            showAlert('⏳ جاري تحضير الصورة بجودة عالية...', 'info');
             
-            html2canvas(element, {
-                scale: 2,
-                backgroundColor: document.body.classList.contains('dark-mode') ? '#1e293b' : '#ffffff',
-                logging: false,
-                useCORS: true
-            }).then(canvas => {
+            // انتظار تحميل الرسم البياني
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            try {
+                const canvas = await html2canvas(element, {
+                    scale: 3, // جودة عالية جداً
+                    backgroundColor: document.body.classList.contains('dark-mode') ? '#1e293b' : '#ffffff',
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: false,
+                    windowWidth: element.scrollWidth,
+                    windowHeight: element.scrollHeight,
+                    onclone: (clonedDoc, element) => {
+                        // تحسين الرسم البياني في النسخة المستنسخة
+                        const clonedChart = clonedDoc.getElementById('distributionChart');
+                        if (clonedChart && chart) {
+                            // تأكيد وجود الرسم البياني
+                        }
+                    }
+                });
+                
                 const link = document.createElement('a');
                 const date = new Date();
-                const timestamp = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}_${date.getHours()}-${date.getMinutes()}`;
+                const timestamp = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}_${date.getHours()}-${date.getMinutes()}-${date.getSeconds()}`;
                 link.download = `stock-calculator-${timestamp}.png`;
-                link.href = canvas.toDataURL();
+                link.href = canvas.toDataURL('image/png');
                 link.click();
-                showAlert('✅ تم حفظ الصفحة كصورة بنجاح!', 'success');
-            }).catch(error => {
+                showAlert('✅ تم حفظ الصفحة كصورة بجودة عالية!', 'success');
+            } catch (error) {
                 console.error(error);
                 showAlert('❌ حدث خطأ أثناء حفظ الصورة', 'error');
-            });
+            }
+        }
+
+        // دالة محسنة لحفظ PDF بجودة عالية
+        async function exportAsHighQualityPDF() {
+            const element = document.getElementById('page-container');
+            showAlert('⏳ جاري تحضير ملف PDF بجودة عالية...', 'info');
+            
+            // انتظار تحميل الرسم البياني
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            try {
+                const canvas = await html2canvas(element, {
+                    scale: 3, // جودة عالية جداً
+                    backgroundColor: document.body.classList.contains('dark-mode') ? '#1e293b' : '#ffffff',
+                    logging: false,
+                    useCORS: true,
+                    windowWidth: element.scrollWidth,
+                    windowHeight: element.scrollHeight
+                });
+                
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                
+                // حساب أبعاد الصفحة بدقة
+                const imgWidth = 210; // A4 width in mm
+                const pageHeight = 297; // A4 height in mm
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                let pdf = new jsPDF({
+                    orientation: 'p',
+                    unit: 'mm',
+                    format: 'a4',
+                    compress: false
+                });
+                
+                let position = 0;
+                
+                if (imgHeight <= pageHeight) {
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+                } else {
+                    let heightLeft = imgHeight;
+                    let page = 1;
+                    
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+                    heightLeft -= pageHeight;
+                    
+                    while (heightLeft > 0) {
+                        position = heightLeft - imgHeight;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+                        heightLeft -= pageHeight;
+                        page++;
+                    }
+                }
+                
+                const date = new Date();
+                const timestamp = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}_${date.getHours()}-${date.getMinutes()}-${date.getSeconds()}`;
+                pdf.save(`stock-calculator-${timestamp}.pdf`);
+                showAlert('✅ تم حفظ الصفحة كملف PDF بجودة عالية!', 'success');
+            } catch (error) {
+                console.error(error);
+                showAlert('❌ حدث خطأ أثناء حفظ ملف PDF', 'error');
+            }
         }
 
         function exportResultAsImage() {
@@ -944,7 +1021,7 @@
             showAlert('⏳ جاري تحضير صورة النتائج...', 'info');
             
             html2canvas(resultElement, {
-                scale: 2,
+                scale: 3,
                 backgroundColor: document.body.classList.contains('dark-mode') ? '#1e293b' : '#ffffff',
                 logging: false
             }).then(canvas => {
@@ -959,56 +1036,6 @@
                 console.error(error);
                 showAlert('❌ حدث خطأ أثناء حفظ الصورة', 'error');
             });
-        }
-
-        async function exportAsPDF() {
-            const element = document.getElementById('page-container');
-            showAlert('⏳ جاري تحضير ملف PDF...', 'info');
-            
-            try {
-                const canvas = await html2canvas(element, {
-                    scale: 2,
-                    backgroundColor: document.body.classList.contains('dark-mode') ? '#1e293b' : '#ffffff',
-                    logging: false,
-                    useCORS: true
-                });
-                
-                const imgData = canvas.toDataURL('image/png');
-                const { jsPDF } = window.jspdf;
-                
-                const imgWidth = 210;
-                const pageHeight = 297;
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                
-                let pdf = new jsPDF('p', 'mm', 'a4');
-                let position = 0;
-                
-                if (imgHeight <= pageHeight) {
-                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                } else {
-                    let heightLeft = imgHeight;
-                    let page = 1;
-                    
-                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                    heightLeft -= pageHeight;
-                    
-                    while (heightLeft > 0) {
-                        position = heightLeft - imgHeight;
-                        pdf.addPage();
-                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                        heightLeft -= pageHeight;
-                        page++;
-                    }
-                }
-                
-                const date = new Date();
-                const timestamp = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}_${date.getHours()}-${date.getMinutes()}`;
-                pdf.save(`stock-calculator-${timestamp}.pdf`);
-                showAlert('✅ تم حفظ الصفحة كملف PDF بنجاح!', 'success');
-            } catch (error) {
-                console.error(error);
-                showAlert('❌ حدث خطأ أثناء حفظ ملف PDF', 'error');
-            }
         }
 
         function printPage() {
